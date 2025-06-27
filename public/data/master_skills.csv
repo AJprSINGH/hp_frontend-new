@@ -1,0 +1,21 @@
+id,skill_category,skill_name,description,proficiency_level
+1,Technical,JavaScript,Programming language for web development,Beginner|Intermediate|Advanced|Expert
+2,Technical,React,Frontend JavaScript library,Beginner|Intermediate|Advanced|Expert
+3,Technical,Node.js,JavaScript runtime for backend,Beginner|Intermediate|Advanced|Expert
+4,Technical,TypeScript,Typed superset of JavaScript,Beginner|Intermediate|Advanced|Expert
+5,Technical,Git,Version control system,Beginner|Intermediate|Advanced|Expert
+6,Business,Product Strategy,Strategic product planning,Beginner|Intermediate|Advanced|Expert
+7,Business,Market Analysis,Market research and analysis,Beginner|Intermediate|Advanced|Expert
+8,Management,Agile Methodology,Agile project management,Beginner|Intermediate|Advanced|Expert
+9,Analytics,Data Analysis,Data interpretation and insights,Beginner|Intermediate|Advanced|Expert
+10,Design,UI Design,User interface design,Beginner|Intermediate|Advanced|Expert
+11,Design,Figma,Design collaboration tool,Beginner|Intermediate|Advanced|Expert
+12,Research,User Research,User experience research,Beginner|Intermediate|Advanced|Expert
+13,Design,Prototyping,Interactive prototype creation,Beginner|Intermediate|Advanced|Expert
+14,Technical,Python,General-purpose programming language,Beginner|Intermediate|Advanced|Expert
+15,Technical,Machine Learning,AI and ML model development,Beginner|Intermediate|Advanced|Expert
+16,Technical,SQL,Database query language,Beginner|Intermediate|Advanced|Expert
+17,Analytics,Statistics,Statistical analysis methods,Beginner|Intermediate|Advanced|Expert
+18,Medical,Clinical Knowledge,Medical practice knowledge,Beginner|Intermediate|Advanced|Expert
+19,Medical,Patient Care,Patient care and support,Beginner|Intermediate|Advanced|Expert
+20,Medical,Medical Ethics,Healthcare ethical principles,Beginner|Intermediate|Advanced|Expert

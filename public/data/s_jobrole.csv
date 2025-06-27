@@ -1,0 +1,16 @@
+id,industry_id,role_name,department,sub_department,description
+1,1,Software Engineer,Engineering,Development,Develops software applications and systems
+2,1,Product Manager,Product,Strategy,Manages product development and strategy
+3,1,UX Designer,Design,User Experience,Designs user interfaces and experiences
+4,1,Data Scientist,Engineering,Data,Analyzes data and builds ML models
+5,2,Doctor,Medical,General Practice,Provides medical care to patients
+6,2,Nurse,Medical,Patient Care,Provides nursing care and patient support
+7,2,Medical Researcher,Research,Clinical Research,Conducts medical research studies
+8,3,Financial Analyst,Finance,Analysis,Analyzes financial data and markets
+9,3,Investment Banker,Investment,Corporate Finance,Manages investment banking services
+10,3,Risk Manager,Risk,Compliance,Manages financial risk and compliance
+11,4,Teacher,Education,Instruction,Provides educational instruction
+12,4,Academic Researcher,Research,Academic,Conducts academic research
+13,5,Sales Manager,Sales,Management,Manages sales teams and strategies
+14,5,Marketing Specialist,Marketing,Digital Marketing,Executes marketing campaigns
+15,6,Operations Manager,Operations,Manufacturing,Manages manufacturing operations

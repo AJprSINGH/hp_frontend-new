@@ -1,0 +1,21 @@
+id,jobrole_id,task_name,frequency,complexity
+1,1,Write Code,Daily,Medium
+2,1,Code Review,Daily,Medium
+3,1,Debug Issues,Daily,High
+4,1,System Design,Weekly,High
+5,2,Market Research,Weekly,Medium
+6,2,Product Planning,Weekly,High
+7,2,Stakeholder Meetings,Daily,Medium
+8,2,Feature Prioritization,Weekly,High
+9,3,User Interviews,Weekly,Medium
+10,3,Design Mockups,Daily,Medium
+11,3,Prototype Testing,Weekly,High
+12,3,Design Systems,Monthly,High
+13,4,Data Collection,Daily,Medium
+14,4,Model Development,Weekly,High
+15,4,Data Visualization,Weekly,Medium
+16,4,Statistical Analysis,Daily,High
+17,5,Patient Consultation,Daily,High
+18,5,Medical Diagnosis,Daily,High
+19,5,Treatment Planning,Daily,High
+20,5,Medical Documentation,Daily,Medium

@@ -1,0 +1,21 @@
+id,jobrole_id,skill_name,skill_level,importance
+1,1,JavaScript,Expert,High
+2,1,React,Advanced,High
+3,1,Node.js,Advanced,Medium
+4,1,TypeScript,Advanced,High
+5,1,Git,Expert,High
+6,2,Product Strategy,Expert,High
+7,2,Market Analysis,Advanced,High
+8,2,Agile Methodology,Expert,High
+9,2,Data Analysis,Advanced,Medium
+10,3,UI Design,Expert,High
+11,3,Figma,Expert,High
+12,3,User Research,Advanced,High
+13,3,Prototyping,Advanced,Medium
+14,4,Python,Expert,High
+15,4,Machine Learning,Expert,High
+16,4,SQL,Advanced,High
+17,4,Statistics,Expert,High
+18,5,Clinical Knowledge,Expert,High
+19,5,Patient Care,Expert,High
+20,5,Medical Ethics,Advanced,High

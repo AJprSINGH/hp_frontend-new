@@ -1,0 +1,21 @@
+id,skill_name,knowledge_area,ability_description
+1,JavaScript,Programming Languages,Ability to write and debug JavaScript code
+2,React,Frontend Frameworks,Ability to build reactive user interfaces
+3,Node.js,Backend Development,Ability to build server-side applications
+4,TypeScript,Programming Languages,Ability to write type-safe JavaScript
+5,Git,Version Control,Ability to manage code versions and collaborate
+6,Product Strategy,Business Strategy,Ability to define product vision and roadmap
+7,Market Analysis,Business Analysis,Ability to analyze market trends and opportunities
+8,Agile Methodology,Project Management,Ability to manage projects using agile practices
+9,Data Analysis,Data Science,Ability to analyze and interpret data
+10,UI Design,Design,Ability to create user interface designs
+11,Figma,Design Tools,Ability to use design software effectively
+12,User Research,UX Research,Ability to conduct user research studies
+13,Prototyping,Design Process,Ability to create interactive prototypes
+14,Python,Programming Languages,Ability to write Python scripts and applications
+15,Machine Learning,AI/ML,Ability to build and deploy ML models
+16,SQL,Database Management,Ability to query and manage databases
+17,Statistics,Data Science,Ability to apply statistical methods
+18,Clinical Knowledge,Medical Expertise,Deep understanding of medical practices
+19,Patient Care,Healthcare,Ability to provide compassionate patient care
+20,Medical Ethics,Healthcare,Understanding of medical ethical principles
