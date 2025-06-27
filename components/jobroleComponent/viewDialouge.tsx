@@ -244,7 +244,7 @@ const ViewSkill: React.FC<ViewSkillProps> = ({ skillId, formType, onClose }) => 
                   <li onClick={() => handleDelete(skillId)}><button className="w-full text-left px-2 py-2 hover:bg-gray-100 border-b-1 border-[#ddd]"><span className="mdi mdi-delete"></span> Delete Skill</button></li>
                 </ul>
               )}
-              {dialogOpen.edit && (
+              {/* {dialogOpen.edit && (
                 <EditDialog
                   skillId={skillId}
                   onClose={() => setDialogOpen({ ...dialogOpen, edit: false })}
@@ -256,7 +256,7 @@ const ViewSkill: React.FC<ViewSkillProps> = ({ skillId, formType, onClose }) => 
                     setDialogOpen({ ...dialogOpen, edit: false });
                   }}
                 />
-              )}
+              )} */}
             </div>
           </div>
         </div>
