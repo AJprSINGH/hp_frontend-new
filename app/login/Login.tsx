@@ -97,7 +97,7 @@ const Login: React.FC = () => {
           </article>
 
           <article className="z-10 flex flex-col items-center justify-center w-[500%] h-screen max-md:ml-0 max-md:w-full px-[40px]">
-            {/* <div className="flex w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl bg-white h-[550px]"> */}
+            {/* <div className="flex flex-1 w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl bg-white h-[550px]"> */}
             {/* <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden min-h-[550px] max-md:min-h-[300px] max-sm:min-h-[200px] max-sm:mx-[20px]"> */}
             <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden min-h-[550px] max-md:min-h-[300px] max-sm:min-h-[200px]">
               {/* Left Panel */}
