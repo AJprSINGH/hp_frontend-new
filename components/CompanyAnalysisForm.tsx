@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Globe, Building, Users, Briefcase, Lightbulb, CheckSquare, Brain, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 const urlSchema = z.object({
@@ -82,10 +83,22 @@ interface AnalysisResult {
   websiteUrl: string;
 }
 
+interface IndustryOption {
+  id: string;
+  industry_name: string;
+  description: string;
+  similarity: number;
+}
+
 export function CompanyAnalysisForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [topIndustries, setTopIndustries] = useState<IndustryOption[]>([]);
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
+  const [isUpdatingIndustry, setIsUpdatingIndustry] = useState(false);
+  const [originalResult, setOriginalResult] = useState<AnalysisResult | null>(null);
+  const [isAnalyzerLocked, setIsAnalyzerLocked] = useState(false);
 
   const {
     register,
@@ -98,10 +111,92 @@ export function CompanyAnalysisForm() {
 
   const websiteUrl = watch('websiteUrl');
 
+  // Check if analyzer is locked when component mounts
+  useEffect(() => {
+    const lockedState = localStorage.getItem('analyzerLocked');
+    const savedAnalysis = localStorage.getItem('savedAnalysis');
+
+    if (lockedState === 'true') {
+      setIsAnalyzerLocked(true);
+
+      if (savedAnalysis) {
+        setResult(JSON.parse(savedAnalysis));
+      }
+    }
+  }, []);
+
+  // Function to add job roles to the library
+  const addJobRolesToLibrary = async (jobRoles: any[]) => {
+    if (!jobRoles || jobRoles.length === 0) return;
+
+    const userData = localStorage.getItem('userData');
+    if (!userData) return;
+
+    const { APP_URL, token, org_type, sub_institute_id, user_id, user_profile_name } = JSON.parse(userData);
+
+    // Add each job role to the library
+    for (const role of jobRoles) {
+      const payload = {
+        jobrole: role.role_name,
+        description: role.description,
+        type: "API",
+        method_field: 'POST',
+        token: token,
+        sub_institute_id: sub_institute_id,
+        org_type: org_type,
+        user_profile_name: user_profile_name,
+        user_id: user_id,
+        formType: 'user',
+      };
+
+      try {
+        await fetch(`${APP_URL}/jobrole_library`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (error) {
+        console.error("Error adding job role:", error);
+      }
+    }
+  };
+
+  // Function to save analysis and lock the analyzer
+  const saveAnalysis = async () => {
+    if (!result) return;
+
+    try {
+      // Save the analysis state to localStorage to persist across the session
+      localStorage.setItem('savedAnalysis', JSON.stringify(result));
+      localStorage.setItem('analyzerLocked', 'true');
+
+      // Add job roles to the Job Role Library
+      await addJobRolesToLibrary(result.matches.jobRoles);
+
+      // Lock the analyzer
+      setIsAnalyzerLocked(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save analysis');
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
+    // If analyzer is locked, show message and return
+    if (isAnalyzerLocked) {
+      setError('Website analyzer is locked. You can only analyze one company per login session.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setTopIndustries([]);
+    setSelectedIndustry(null);
+    setOriginalResult(null);
 
     try {
       const response = await fetch('/api/analyze-company', {
@@ -119,11 +214,128 @@ export function CompanyAnalysisForm() {
 
       const analysisResult: AnalysisResult = await response.json();
       setResult(analysisResult);
+      setOriginalResult(analysisResult);
+
+      // Fetch all industries to find top matches
+      const industriesResponse = await fetch('/api/industries');
+      if (industriesResponse.ok) {
+        const industries = await industriesResponse.json();
+        const matchedIndustries = findTopMatchingIndustries(
+          analysisResult.analysis.industry,
+          industries,
+          4
+        );
+        setTopIndustries(matchedIndustries);
+
+        // Set the detected industry as selected by default
+        const detectedIndustry = matchedIndustries.find(
+          i => i.industry_name.toLowerCase() === analysisResult.analysis.industry.toLowerCase()
+        );
+        if (detectedIndustry) {
+          setSelectedIndustry(detectedIndustry.id);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Function to find top matching industries based on string similarity
+  const findTopMatchingIndustries = (detectedIndustry: string, allIndustries: any[], count: number): IndustryOption[] => {
+    // Simple string similarity function
+    const calculateSimilarity = (a: string, b: string): number => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+
+      // Exact match
+      if (aLower === bLower) return 1;
+
+      // Contains match
+      if (aLower.includes(bLower) || bLower.includes(aLower)) {
+        return 0.8;
+      }
+
+      // Word match
+      const aWords = aLower.split(/\s+/);
+      const bWords = bLower.split(/\s+/);
+
+      let matchCount = 0;
+      for (const aWord of aWords) {
+        if (bWords.some(bWord => bWord === aWord || bWord.includes(aWord) || aWord.includes(bWord))) {
+          matchCount++;
+        }
+      }
+
+      return matchCount / Math.max(aWords.length, bWords.length);
+    };
+
+    // Calculate similarity for each industry
+    const industriesWithSimilarity = allIndustries.map(industry => ({
+      ...industry,
+      similarity: calculateSimilarity(detectedIndustry, industry.industry_name)
+    }));
+
+    // Sort by similarity and take top N
+    return industriesWithSimilarity
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, count);
+  };
+
+  // Function to update analysis based on selected industry
+  const updateAnalysisWithIndustry = async (industryId: string) => {
+    if (!originalResult) return;
+
+    setIsUpdatingIndustry(true);
+
+    try {
+      const response = await fetch('/api/update-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          industryId,
+          originalAnalysis: originalResult.analysis
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update analysis');
+      }
+
+      const updatedData = await response.json();
+
+      // Update the result with the new industry data
+      setResult({
+        ...originalResult,
+        analysis: {
+          ...originalResult.analysis,
+          industry: updatedData.industry.industry_name
+        },
+        matches: {
+          ...originalResult.matches,
+          industry: updatedData.industry,
+          jobRoles: updatedData.jobRoles,
+          primaryJobRole: updatedData.jobRoles[0] || originalResult.matches.primaryJobRole,
+          skills: updatedData.skills,
+          tasks: updatedData.tasks,
+          knowledgeAreas: updatedData.knowledgeAreas,
+          masterSkills: updatedData.masterSkills
+        }
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update industry');
+    } finally {
+      setIsUpdatingIndustry(false);
+    }
+  };
+
+  // Handle industry selection change
+  const handleIndustryChange = (industryId: string) => {
+    setSelectedIndustry(industryId);
+    updateAnalysisWithIndustry(industryId);
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -162,6 +374,7 @@ export function CompanyAnalysisForm() {
                   placeholder="https://example.com"
                   className="pl-10"
                   {...register('websiteUrl')}
+                  disabled={isAnalyzerLocked}
                 />
               </div>
               {errors.websiteUrl && (
@@ -175,7 +388,7 @@ export function CompanyAnalysisForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !websiteUrl}
+              disabled={isLoading || !websiteUrl || isAnalyzerLocked}
             >
               {isLoading ? (
                 <>
@@ -215,6 +428,52 @@ export function CompanyAnalysisForm() {
               <p className="text-red-800 font-medium">Analysis Failed</p>
               <p className="text-red-600 text-sm">{error}</p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Industry Selection */}
+      {result && topIndustries.length > 0 && (
+        <Card className="shadow-lg border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5 text-blue-600" />
+              Select Best Matching Industry
+            </CardTitle>
+            <CardDescription>
+              Choose the industry that best matches this company
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isUpdatingIndustry && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+                <span>Updating analysis...</span>
+              </div>
+            )}
+
+            {!isUpdatingIndustry && (
+              <RadioGroup
+                value={selectedIndustry || ''}
+                onValueChange={handleIndustryChange}
+                className="space-y-3"
+              >
+                {topIndustries.map((industry) => (
+                  <div key={industry.id} className="flex items-start space-x-2">
+                    <RadioGroupItem value={industry.id} id={`industry-${industry.id}`} className="mt-1" />
+                    <div className="grid gap-1.5 w-full">
+                      <Label htmlFor={`industry-${industry.id}`} className="font-medium">
+                        {industry.industry_name}
+                        {industry.similarity >= 0.8 && (
+                          <Badge className="ml-2 bg-green-500">High Match</Badge>
+                        )}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">{industry.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
           </CardContent>
         </Card>
       )}
@@ -471,6 +730,32 @@ export function CompanyAnalysisForm() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Save Analysis Button */}
+      {result && selectedIndustry && !isAnalyzerLocked && (
+        <div className="flex justify-end mt-4">
+          <Button
+            onClick={saveAnalysis}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Save Analysis & Lock Analyzer
+          </Button>
+        </div>
+      )}
+
+      {/* Locked Message */}
+      {isAnalyzerLocked && (
+        <Card className="border-yellow-200 bg-yellow-50 mt-4">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <p className="text-yellow-800 font-medium">
+                Website analyzer is locked. You can only analyze one company per login session.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

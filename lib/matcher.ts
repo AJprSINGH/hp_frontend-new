@@ -90,7 +90,7 @@ export class DataMatcher {
         confidence: 0
       };
     }
-
+  
     // Clean the search term
     const cleanSearchTerm = searchTerm.trim();
     if (!cleanSearchTerm) {
@@ -99,11 +99,20 @@ export class DataMatcher {
         confidence: 0
       };
     }
-
+    
+    // Special case for gaming/video game industry
+    const lowerSearchTerm = cleanSearchTerm.toLowerCase();
+    if (lowerSearchTerm.includes('game') || lowerSearchTerm.includes('gaming') || lowerSearchTerm.includes('video')) {
+      const mediaIndustry = this.industries.find(i => i.industry_name.toLowerCase() === 'media');
+      if (mediaIndustry) {
+        return { industry: mediaIndustry, confidence: 85 };
+      }
+    }
+  
     // Use Fuse.js for fuzzy matching first
     const fuse = new Fuse(this.industries, {
       keys: ['industry_name', 'description'],
-      threshold: 0.6,
+      threshold: 0.8, // Increase from 0.6 to be more lenient
       includeScore: true
     });
 

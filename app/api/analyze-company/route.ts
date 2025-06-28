@@ -24,7 +24,7 @@ async function loadCSVData() {
 
   try {
     const dataDir = path.join(process.cwd(), 'public', 'data');
-    
+
     const [
       industriesCSV,
       jobRolesCSV,
@@ -80,31 +80,40 @@ export async function POST(req: NextRequest) {
 
     // Load CSV data
     const csvData = await loadCSVData();
-    
+
     // Initialize the matcher
     const matcher = new DataMatcher(csvData);
 
     let deepSeekResponse;
     let matchedData;
-    
+
     try {
       // Analyze company with DeepSeek
       deepSeekResponse = await analyzeCompanyWithDeepSeek(websiteUrl);
-      
+
       // Match the DeepSeek response with local database
+      let industryToMatch = deepSeekResponse.industry;
+
+      // Map specific industries to our database categories
+      if (industryToMatch.toLowerCase().includes('game') ||
+        industryToMatch.toLowerCase().includes('gaming') ||
+        industryToMatch.toLowerCase().includes('video')) {
+        industryToMatch = 'Media';
+      }
+
       matchedData = matcher.matchCompanyData(
-        deepSeekResponse.industry,
+        industryToMatch,
         deepSeekResponse.jobRole,
         deepSeekResponse.skills
       );
     } catch (deepSeekError) {
       console.error('DeepSeek analysis failed:', deepSeekError);
-      
+
       // Fallback matching with basic URL analysis
       const domain = new URL(websiteUrl).hostname.toLowerCase();
       let fallbackIndustry = 'Technology';
       let fallbackJobRole = 'Software Engineer';
-      
+
       if (domain.includes('health') || domain.includes('medical')) {
         fallbackIndustry = 'Healthcare';
         fallbackJobRole = 'Healthcare Professional';
@@ -114,10 +123,13 @@ export async function POST(req: NextRequest) {
       } else if (domain.includes('edu') || domain.includes('school')) {
         fallbackIndustry = 'Education';
         fallbackJobRole = 'Teacher';
+      } else if (domain.includes('game') || domain.includes('gaming') || domain.includes('rockstar')) {
+        fallbackIndustry = 'Media';
+        fallbackJobRole = 'Game Developer';
       }
-      
+
       matchedData = matcher.matchCompanyData(fallbackIndustry, fallbackJobRole);
-      
+
       deepSeekResponse = {
         industry: fallbackIndustry,
         department: matchedData.jobRoles[0]?.department || 'General',
@@ -152,8 +164,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to analyze company', 
+      {
+        error: 'Failed to analyze company',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

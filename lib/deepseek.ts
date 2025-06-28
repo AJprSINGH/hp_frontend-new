@@ -139,6 +139,11 @@ function createFallbackResponse(content: string, websiteUrl: string): DeepSeekRe
     jobRole = 'Sales Manager';
     department = 'Sales';
     subDepartment = 'Management';
+  } else if (domain.includes('game') || domain.includes('gaming') || domain.includes('rockstar')) {
+    industry = 'Media';
+    jobRole = 'Game Developer';
+    department = 'Game Development';
+    subDepartment = 'Game Design';
   }
 
   return {
