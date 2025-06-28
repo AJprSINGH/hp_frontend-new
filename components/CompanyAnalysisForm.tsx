@@ -312,7 +312,10 @@ export function CompanyAnalysisForm() {
         ...originalResult,
         analysis: {
           ...originalResult.analysis,
-          industry: updatedData.industry.industry_name
+          industry: updatedData.industry.industry_name,
+          department: updatedData.jobRoles[0]?.department || originalResult.analysis.department,
+          subDepartment: updatedData.jobRoles[0]?.sub_department || originalResult.analysis.subDepartment,
+          jobRole: updatedData.jobRoles[0]?.role_name || originalResult.analysis.jobRole
         },
         matches: {
           ...originalResult.matches,
