@@ -246,7 +246,7 @@ const ViewSkill: React.FC<ViewSkillProps> = ({ skillId, formType, onClose }) => 
               )}
               {dialogOpen.edit && (
                 <EditDialog
-                  skillId={skillId}
+                  jobRoleId={skillId}
                   onClose={() => setDialogOpen({ ...dialogOpen, edit: false })}
                   onSuccess={() => {
                     // Refresh data after editing
