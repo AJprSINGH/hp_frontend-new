@@ -1,305 +1,493 @@
-"use client";
-
 import React, { useEffect, useState, useMemo } from 'react';
-import AddDialog from "./addDialouge";
 import EditDialog from "./editDialouge";
+import dynamic from 'next/dynamic';
+import DataTable from "react-data-table-component";
 
-interface TableData {
-  id: number;
-  jobrole: string;
-  description: string;
-  company_information: string;
-  contact_information: string;
-  location: string;
-  job_posting_date: string;
-  application_deadline: string;
-  salary_range: string;
-  required_skill_experience: string;
-  responsibilities: string;
-  benefits: string;
-  keyword_tags: string;
-  internal_tracking: string;
-}
+const ExcelExportButton = dynamic(
+    () => import('../exportButtons/excelExportButton').then(mod => mod.ExcelExportButton),
+    { ssr: false }
+);
+
+const PdfExportButton = dynamic(
+    () => import('../exportButtons/PdfExportButton').then(mod => mod.PdfExportButton),
+    { ssr: false }
+);
+
+const PrintButton = dynamic(
+    () => import('../exportButtons/printExportButton').then(mod => mod.PrintButton),
+    { ssr: false }
+);
 
 interface TableViewProps {
-  tableData: TableData[];
+    refreshKey?: number;
 }
 
-const TableView: React.FC<TableViewProps> = ({ tableData }) => {
-
-  // New states for table control
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [dialogOpen, setDialogOpen] = useState({
-    view: false,
-    add: false,
-    edit: false,
-  });
-
-  // State to store the ID of the job role selected for editing
-  const [selectedJobRole, setSelectedJobRole] = useState<number | null>(null);
-
-  // State to trigger a refresh of the data (e.g., after an edit/delete operation)
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [sessionData, setSessionData] = useState({
-    url: "",
-    token: "",
-    orgType: "",
-    subInstituteId: "",
-    userId: "",
-    userProfile: "",
-  });
-  useEffect(() => {
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      const { APP_URL, token, org_type, sub_institute_id, user_id, user_profile_name } = JSON.parse(userData);
-      setSessionData({
-        url: APP_URL,
-        token,
-        orgType: org_type,
-        subInstituteId: sub_institute_id,
-        userId: user_id,
-        userProfile: user_profile_name,
-      });
-    }
-  }, []);
-  // Filtered and paginated data
-  const filteredData = useMemo(() => {
-    if (!searchTerm) return tableData;
-    const lowerSearch = searchTerm.toLowerCase();
-    return tableData.filter(row =>
-      row.jobrole.toLowerCase().includes(lowerSearch) ||
-      row.description.toLowerCase().includes(lowerSearch) ||
-      row.company_information.toLowerCase().includes(lowerSearch) ||
-      row.contact_information.toLowerCase().includes(lowerSearch) ||
-      row.location.toLowerCase().includes(lowerSearch) ||
-      row.job_posting_date.toLowerCase().includes(lowerSearch) ||
-      row.application_deadline.toLowerCase().includes(lowerSearch) ||
-      row.salary_range.toLowerCase().includes(lowerSearch) ||
-      row.required_skill_experience.toLowerCase().includes(lowerSearch) ||
-      row.responsibilities.toLowerCase().includes(lowerSearch) ||
-      row.benefits.toLowerCase().includes(lowerSearch) ||
-      row.keyword_tags.toLowerCase().includes(lowerSearch) ||
-      row.internal_tracking.toLowerCase().includes(lowerSearch)
-
+interface JobroleData {
+    id?: number;
+    jobrole: string;
+    description?: string;
+    performance_expectation?: string;
+}
+const TableView: React.FC<TableViewProps> = ({ refreshKey }) => {
+    // States
+    const [departments, setDepartments] = useState<any[]>([]);
+    const [subDepartments, setSubDepartments] = useState<any[]>([]);
+    const [selectedDepartment, setSelectedDepartment] = useState('');
+    const [selectedSubDepartments, setSelectedSubDepartments] = useState<string[]>([]);
+    const [paginationPerPageVal, setPaginationPerPageVal] = useState(100);
+    const [tableData, setTableData] = useState<JobroleData[]>([]);
+    const [selectedJobRole, setSelectedJobRole] = useState<number | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showResetFilters, setShowResetFilters] = useState(false);
+    const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
+        {}
     );
-  }, [searchTerm, tableData]);
+    const [dialogOpen, setDialogOpen] = useState({
+        view: false,
+        add: false,
+        edit: false,
+    });
 
-  // Pagination calculations
-  const totalRows = filteredData.length;
-  const totalPages = rowsPerPage === -1 ? 1 : Math.ceil(totalRows / rowsPerPage);
-  const paginatedData = useMemo(() => {
-    if (rowsPerPage === -1) return filteredData; // Show all
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredData.slice(startIndex, startIndex + rowsPerPage);
-  }, [currentPage, rowsPerPage, filteredData]);
+    const [sessionData, setSessionData] = useState({
+        url: "",
+        token: "",
+        orgType: "",
+        subInstituteId: "",
+        userId: "",
+        userProfile: "",
+    });
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [totalPages, currentPage]);
+    useEffect(() => {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            const { APP_URL, token, org_type, sub_institute_id, user_id, user_profile_name } = JSON.parse(userData);
+            setSessionData({
+                url: APP_URL,
+                token,
+                orgType: org_type,
+                subInstituteId: sub_institute_id,
+                userId: user_id,
+                userProfile: user_profile_name,
+            });
+        }
+    }, []);
 
-  // Function to handle opening the edit dialog
-  const handleEditClick = (id: number) => {
-    setSelectedJobRole(id);
-    setDialogOpen({ ...dialogOpen, edit: true });
-  };
+    useEffect(() => {
+        if (sessionData.url && sessionData.token) {
+            fetchData();
+            fetchDepartments();
+        }
+    }, [paginationPerPageVal, currentPage, sessionData.url, sessionData.token, refreshKey]);
 
-  // Function to handle delete action (placeholder for actual deletion logic)
-  const handleDeleteClick = async (id: number) => {
-    if (!id) return;
+    async function fetchData(department: string = '', subDepartments: string[] = []) {
+        setLoading(true);
+        const subDeptQuery = subDepartments.length > 0
+            ? `&sub_department=${subDepartments.join(',')}`
+            : '';
 
-    if (window.confirm("Are you sure you want to delete this job role?")) {
-      try {
         const res = await fetch(
-          `${sessionData.url}/jobrole_library/${id}?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&user_id=${sessionData.userId}&formType=user`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${sessionData.token}`,
-            },
-          }
+            `${sessionData.url}/jobrole_library?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&department=${department}${subDeptQuery}`
         );
-
         const data = await res.json();
-        alert(data.message);
-        // Refresh the tree view by incrementing the refresh key
-        setRefreshKey(prev => prev + 1);
-        setSelectedJobRole(null);
-      } catch (error) {
-        console.error("Error deleting job role:", error);
-        alert("Error deleting job role");
-      }
+        if (data) {
+            setLoading(false);
+        }
+        setTableData(data.tableData || []);
     }
-  };
 
-  return (
-    <div className='bg-[#fff] mx-2 rounded-sm'>
-      <div className="flex justify-between items-right mb-2 px-4 pt-4 text-right">
-        <button className="bg-blue-500 text-white px-4 py-2 rounded mr-4" onClick={() => setDialogOpen({ ...dialogOpen, add: true })}>Add Jobrole</button>
-      </div>
+    const handleCloseModel = () => {
+        setDialogOpen({ ...dialogOpen, edit: false });
+        fetchData(selectedDepartment, selectedSubDepartments);
+    }
 
-      <div className="mb-2 flex items-center gap-2 px-4">
-        <label>Rows per page:</label>
-        <select
-          value={rowsPerPage}
-          onChange={e => {
-            const val = e.target.value === 'all' ? -1 : parseInt(e.target.value, 10);
-            setRowsPerPage(val);
-            setCurrentPage(1); // reset page on page size change
-          }}
-          className="border rounded px-2 py-1"
-        >
-          <option value="100">50</option>
-          <option value="100">100</option>
-          <option value="500">500</option>
-          <option value="1000">1000</option>
-          <option value="all">All</option>
-        </select>
-        <span className="ml-auto">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="border rounded px-3 py-1 w-64"
-            value={searchTerm}
-            onChange={e => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1); // reset to first page on search
-            }}
-          /> <br />
-          {totalRows} records found
-        </span>
-      </div>
 
-      <div className="w-full p-[10px] overflow-x-auto">
-        <div className="inline-block min-w-full shadow rounded-lg overflow-hidden">
-          <table id="example" className="min-w-full leading-normal">
-            <thead>
-              <tr>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>Jobrole</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>description</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>company information</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>contact information</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>location</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>job posting date</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>application deadline</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>salary range</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>required skill experience</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>responsibilities</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>benefits</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>keyword tags</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>internal tracking</th>
-                <th className='px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider'>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={13} className="text-left p-4">No records found</td>
-                </tr>
-              ) : (
-                paginatedData.map((row, index) => (
-                  <tr key={`${row.id}-${index}`}>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.jobrole}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.description
-                      ? row.description.slice(0, 50) + (row.description.length > 50 ? "..." : "")
-                      : "-"}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.company_information}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.contact_information}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.location}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.job_posting_date}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.application_deadline}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.salary_range}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.required_skill_experience}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.responsibilities}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.benefits}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.keyword_tags}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>{row.internal_tracking}</td>
-                    <td className='px-5 py-5 border-b border-gray-200 bg-white text-sm'>
-                      <div className="flex items-center space-x-2">
+    const handleEditClick = (id: number) => {
+        setSelectedJobRole(id);
+        setDialogOpen({ ...dialogOpen, edit: true });
+    };
+    const resetFilters = () => {
+        setColumnFilters({});
+        setShowResetFilters(false);
+    };
 
-                        <button
-                          onClick={() => handleEditClick(row.id)}
-                          className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded"
+    const handleDeleteClick = async (id: number) => {
+        if (!id) return;
+
+        if (window.confirm("Are you sure you want to delete this job role?")) {
+            try {
+                const res = await fetch(
+                    `${sessionData.url}/jobrole_library/${id}?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&user_id=${sessionData.userId}&formType=user`,
+                    {
+                        method: "DELETE",
+                        headers: {
+                            Authorization: `Bearer ${sessionData.token}`,
+                        },
+                    }
+                );
+
+                const data = await res.json();
+                alert(data.message);
+                fetchData(selectedDepartment, selectedSubDepartments);
+                setSelectedJobRole(null);
+            } catch (error) {
+                console.error("Error deleting job role:", error);
+                alert("Error deleting job role");
+            }
+        }
+    };
+
+    const fetchDepartments = async () => {
+        try {
+            const res = await fetch(`${sessionData.url}/search_data?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&searchType=department&searchWord="departments"`);
+            const data = await res.json();
+            setDepartments(data.searchData || []);
+        } catch (error) {
+            console.error("Error fetching departments:", error);
+            alert("Failed to load departments");
+        }
+    };
+
+    const fetchSubDepartments = async (department: string) => {
+        try {
+            setSelectedDepartment(department);
+            setSelectedSubDepartments([]); // Reset selected sub-departments when department changes
+            const res = await fetch(`${sessionData.url}/search_data?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&searchType=sub_department&searchWord=${encodeURIComponent(department)}`);
+            const data = await res.json();
+            setSubDepartments(data.searchData || []);
+            fetchData(department);
+        } catch (error) {
+            console.error("Error fetching sub-departments:", error);
+            alert("Failed to load sub-departments");
+        }
+    };
+
+    const handleSubDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const options = e.target.options;
+        const selectedOptions: string[] = [];
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].selected) {
+                selectedOptions.push(options[i].value);
+            }
+        }
+        setSelectedSubDepartments(selectedOptions);
+        fetchData(selectedDepartment, selectedOptions);
+    };
+
+    const handleColumnFilter = (column: string, value: string) => {
+        setColumnFilters((prev) => ({
+            ...prev,
+            [column]: value,
+        }));
+    };
+
+    const handlePerPageChange = (newPerPage: any, page: number) => {
+        setPaginationPerPageVal(Number(newPerPage));
+        setCurrentPage(1);
+        // alert(newPerPage);
+        console.log(newPerPage);
+    };
+
+    interface ColumnFilters {
+        [key: string]: string;
+    }
+
+    const filteredData: JobroleData[] = tableData.filter((item: JobroleData) => {
+        return Object.entries(columnFilters as ColumnFilters).every(([column, filterValue]) => {
+            if (!filterValue) return true;
+
+            const columnValue: string = String(
+                item[column as keyof JobroleData] || ""
+            ).toLowerCase();
+            return columnValue.includes(filterValue.toLowerCase());
+        });
+    });
+
+    const columns = [
+        {
+            name: (
+                <div>
+                    <div>Jobrole</div>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        onChange={(e) => handleColumnFilter("jobrole", e.target.value)}
+                        style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                    />
+                </div>
+            ),
+            selector: (row: JobroleData) => row.jobrole ?? "",
+            sortable: true,
+            wrap: true,
+        },
+        {
+            name: (
+                <div>
+                    <div>Jobrole Description</div>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        onChange={(e) => handleColumnFilter("description", e.target.value)}
+                        style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                    />
+                </div>
+            ),
+            selector: (row: JobroleData) =>
+                row.description
+                    ? (row.description.length > 100
+                        ? `${row.description.substring(0, 100)}...`
+                        : row.description)
+                    : "N/A",
+            sortable: true,
+            wrap: true,
+            cell: (row: JobroleData) => (
+                <span data-title={row.description || "N/A"}>
+                    {row.description
+                        ? row.description.length > 100
+                            ? `${row.description.substring(0, 100)}...`
+                            : row.description
+                        : "N/A"}
+                </span>
+            ),
+        },
+        {
+            name: (
+                <div>
+                    <div>Performance Expectation</div>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        onChange={(e) => handleColumnFilter("performance_expectation", e.target.value)}
+                        style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                    />
+                </div>
+            ),
+            selector: (row: JobroleData) =>
+                row.performance_expectation
+                    ? (row.performance_expectation.length > 100
+                        ? `${row.performance_expectation.substring(0, 100)}...`
+                        : row.performance_expectation)
+                    : "N/A",
+            sortable: true,
+            wrap: true,
+            cell: (row: JobroleData) => (
+                <span data-titleHead={row.performance_expectation || "N/A"}>
+                    {row.performance_expectation
+                        ? row.performance_expectation.length > 100
+                            ? `${row.performance_expectation.substring(0, 100)}...`
+                            : row.performance_expectation
+                        : "N/A"}
+                </span>
+            ),
+        },
+        {
+            name: "Actions",
+            cell: (row: JobroleData) => (
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => row.id && handleEditClick(row.id)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded"
+                    >
+                        <span className="mdi mdi-pencil" data-titleHead="Edit Jobrole"></span>
+                    </button>
+                    <button
+                        onClick={() => row.id && handleDeleteClick(row.id)}
+                        className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded"
+                    >
+                        <span className="mdi mdi-trash-can" data-titleHead="Delete Jobrole"></span>
+                    </button>
+                </div>
+            ),
+            ignoreRowClick: true,
+            button: true,
+        },
+    ];
+
+    const customStyles = {
+        headCells: {
+            style: {
+                fontSize: "14px",
+                fontWeight: "bold",
+                backgroundColor: "#4876ab",
+                color: "white",
+                whiteSpace: "nowrap",
+                textAlign: "left" as const,
+            },
+        },
+        cells: {
+            style: {
+                fontSize: "13px",
+                textAlign: "left" as const,
+            },
+        },
+    };
+
+    return (
+        <>
+            <div className='relative bg-[#fff] mx-6 rounded-lg'>
+                {/* Department and Sub-department Filters */}
+                <div className="flex justify-center gap-8 py-6 inset-shadow-sm inset-shadow-[#EBF7FF] rounded-lg">
+                    {/* Department Select */}
+                    <div className="flex flex-col items-center w-[320px]">
+                        <label htmlFor="Department" className="self-start mb-1 px-3">Jobrole Department</label>
+                        <select
+                            name="department"
+                            className="rounded-lg p-2 border-2 border-[#CDE4F5] bg-[#ebf7ff] text-[#444444] focus:outline-none focus:border-blue-200 focus:bg-white w-full focus:rounded-none transition-colors duration-2000 drop-shadow-[0px_5px_5px_rgba(0,0,0,0.12)]"
+                            onChange={e => fetchSubDepartments(e.target.value)}
+                            value={selectedDepartment}
                         >
-                          <span className="mdi mdi-pencil"></span>
-                        </button>
-                        <button
-                          onClick={() => row.id && handleDeleteClick(row.id)}
-                          className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded"
+                            <option value="">Choose a Department to Filter</option>
+                            {departments.map((dept) => (
+                                <option key={dept} value={dept}>
+                                    {dept}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Sub-department Multi-Select */}
+                    <div className="flex flex-col items-center w-[320px]">
+                        <label htmlFor="subDepartment" className="self-start mb-1 px-3">Jobrole Sub-Department</label>
+                        <select
+                            name="sub_department"
+                            className="rounded-lg p-2 resize-y overflow-hidden border-2 border-[#CDE4F5] bg-[#ebf7ff] text-[#444444] focus:outline-none focus:border-blue-200 focus:bg-white w-full focus:rounded-none transition-colors duration-2000 drop-shadow-[0px_5px_5px_rgba(0,0,0,0.12)]"
+                            onChange={handleSubDepartmentChange}
+                            multiple
+                            size={3}
+                            value={selectedSubDepartments}
                         >
-                          <span className="mdi mdi-trash-can"></span>
-                        </button>
+                            <option value="" disabled>Choose Sub-Departments (Hold Ctrl for multiple)</option>
+                            {subDepartments.map((dept) => (
+                                <option key={dept} value={dept}>
+                                    {dept}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
 
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                <hr className='mb-[26px] text-[#ddd] border-2 border-[#449dd5] rounded' />
+            </div>
+            <div className="w-[100%]">
+                {tableData.length > 0 && (
+                    <div className="mt-2 bg-white px-4 rounded-lg shadow-lg">
+                        {/* Header row with pagination left and export buttons right */}
+                        <div className="flex justify-between items-center mb-4 py-4">
+                            {/* Left side - Pagination controls */}
+                            <div className="space-x-4">
+                                {/* <select
+                                    onChange={(e) => handlePerPageChange(Number(e.target.value), 1)}
+                                    className="rounded-lg p-1 border-2 border-[#CDE4F5] bg-[#ebf7ff] text-[#444444] focus:outline-none focus:border-blue-200 focus:bg-white w-full focus:rounded-none transition-colors duration-2000 drop-shadow-[0px_5px_5px_rgba(0,0,0,0.12)]"
+                                    value={paginationPerPageVal}
+                                >
+                                    <option value={100}>100</option>
+                                    <option value={500}>500</option>
+                                    <option value={1000}>1000</option>
+                                </select>
+                                <br />
+                                <span className="text-sm">Total records : {filteredData.length}</span> */}
+                            </div>
 
-      {/* Pagination controls */}
-      {rowsPerPage !== -1 && totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-          >
-            {'<<'}
-          </button>
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            {'<'}
-          </button>
+                            {/* Right side - Export buttons */}
+                            <div className="flex space-x-2">
+                                <PrintButton
+                                    data={tableData}
+                                    title="Job Roles Report"
+                                    excludedFields={["id", "internal_id"]}
+                                    buttonText={
+                                        <>
+                                            <span className="mdi mdi-printer-outline"></span>
+                                        </>
+                                    }
+                                />
+                                <ExcelExportButton
+                                    sheets={[{ data: tableData, sheetName: "Submissions" }]}
+                                    fileName="Skills Jobrole"
+                                    onClick={() => console.log("Export initiated")}
+                                    buttonText={
+                                        <>
+                                            <span className="mdi mdi-file-excel"></span>
+                                        </>
+                                    }
+                                />
+                                <PdfExportButton
+                                    data={tableData}
+                                    fileName="Skills Jobrole"
+                                    onClick={() => console.log("PDF export initiated")}
+                                    buttonText={
+                                        <>
+                                            <span className="mdi mdi-file-pdf-box"></span>
+                                        </>
+                                    }
+                                />
+                            </div>
+                        </div>
 
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            {'>'}
-          </button>
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
-          >
-            {'>>'}
-          </button>
-        </div>
-      )}
-      {dialogOpen.add && (
-        <AddDialog skillId={null}
-          onClose={() => setDialogOpen({ ...dialogOpen, add: false })}
-          onSuccess={() => {
-            setDialogOpen({ ...dialogOpen, add: false });
-          }}
-        />
-      )}
-      {dialogOpen.edit && selectedJobRole && (
-        <EditDialog
-          jobRoleId={selectedJobRole}
-          onClose={() => setDialogOpen({ ...dialogOpen, edit: false })}
-          onSuccess={() => {
-            setRefreshKey(prev => prev + 1); // Trigger data refresh (e.g., re-fetch from API)
-            setDialogOpen({ ...dialogOpen, edit: false });
-            setSelectedJobRole(null); // Clear selected job role
-          }}
-        />
-      )}
-    </div>
-  )
+                        <DataTable
+                            columns={columns}
+                            data={filteredData.length > 0 ? filteredData : tableData}
+                            pagination
+                            highlightOnHover
+                            responsive
+                            striped
+                            paginationPerPage={paginationPerPageVal}
+                            paginationRowsPerPageOptions={[100, 500, 1000]}
+                            onChangeRowsPerPage={handlePerPageChange}
+                            customStyles={customStyles}
+                            progressPending={loading}
+                            noDataComponent={
+                                <div className="w-full">
+                                    <table className="rdt-table w-full">
+                                        <thead>
+                                            <tr>
+                                                {columns.map((col, idx) => (
+                                                    <th key={idx} style={customStyles.headCells.style}>
+                                                        {col.name}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colSpan={columns.length} style={{ textAlign: 'center', padding: '20px' }}>
+                                                    {showResetFilters ? (
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <div>No records found matching your search criteria</div>
+                                                            <button
+                                                                onClick={resetFilters}
+                                                                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded"
+                                                            >
+                                                                Reset Filters
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        "No records available"
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            paginationDefaultPage={currentPage}
+                            onChangePage={setCurrentPage}
+                        />
+                    </div>
+                )}
+            </div>
+            {/* Edit Dialog */}
+            {dialogOpen.edit && selectedJobRole && (
+                <EditDialog
+                    jobRoleId={selectedJobRole}
+                    onClose={handleCloseModel}
+                    onSuccess={() => {
+                        setDialogOpen({ ...dialogOpen, edit: false });
+                        fetchData(selectedDepartment, selectedSubDepartments);
+                    }}
+                />
+            )}
+        </>
+    );
 };
 
 export default TableView;

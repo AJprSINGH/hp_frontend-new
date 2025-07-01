@@ -31,8 +31,8 @@ const MainScreen: React.FC = () => {
   }, []);
 
   const renderComponent = () => {
-    if (!selectedMenu) return null;
-    // alert(selectedMenu.access);
+  if (!selectedMenu) return null;
+  // alert(selectedMenu.access);
     switch (selectedMenu) {
       case selectedMenu:
         const DynamicComponent = lazy(() => {
@@ -42,12 +42,10 @@ const MainScreen: React.FC = () => {
             switch (attempt) {
               case 1:
                 importPath = `@/app/content/${selectedMenu.access}`;
-                console.log("hello");
                 console.log('case ', importPath);
                 break;
               case 2:
                 importPath = `@/app/content/Libraries/${selectedMenu.menu}`;
-                console.log("hello");
                 console.log('case ', importPath);
                 break;
               default:
@@ -102,13 +100,13 @@ const MainScreen: React.FC = () => {
 
   return (
     <main className="flex overflow-hidden flex-col w-auto pt-5 pr-6 pl-6 bg-white rounded-2xl shadow-sm pb-6 h-[fit-content] max-md:px-5 max-md:pb-24">
-      {/* <img
+        {/* <img
           src="https://cdn.builder.io/api/v1/image/assets/TEMP/e6eab4227e391bd1268df1fb318a60e266703003?placeholderIfAbsent=true&apiKey=f18a54c668db405eb048e2b0a7685d39"
           alt=""
           className="object-contain self-end aspect-square w-[35px]"
         /> */}
-      <div className="self-center mt-4 w-full max-w-[1360px] max-md:max-w-full">
-        {renderComponent()}
+        <div className="self-center mt-4 w-full max-w-[1360px] max-md:max-w-full">
+      {renderComponent()}
       </div>
     </main>
   );

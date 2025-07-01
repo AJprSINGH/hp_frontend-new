@@ -4,34 +4,32 @@ import React, { useEffect, useState } from "react";
 import ViewSkill from "./viewDialouge"; // Adjust path as needed
 import AddDialog from "./addDialouge";
 
-interface allSkillData {
+interface alljobroleData {
   id: number;
   category: string;
   sub_category: string | null;
   no_sub_category: string | null;
-  title: string;
-  description?: string;
+  jobrole: string;
 }
 
 type SkillTree = {
   [category: string]: {
-    [subCategory: string]: allSkillData[];
+    [subCategory: string]: alljobroleData[];
   };
 };
 
 interface TreeViewProps {
-  allSkillData: SkillTree;
+  alljobroleData: SkillTree;
 }
 interface userSkillsData {
   id: number;
   category: string;
   sub_category: string;
   no_sub_category: string;
-  title: string;
-  description?: string;
+  jobrole: string;
 }
 
-const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
+const TreeView: React.FC<TreeViewProps> = ({ alljobroleData }) => {
   const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSkillId, setSelectedSkillId] = useState<number | null>(null);
@@ -65,12 +63,11 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
       setessinSubInstituteId(sub_institute_id);
       setessionUserID(user_id);
       setessionUserProfile(user_profile_name);
-      // console.log('allSkillData',allSkillData);
     }
 
     const initialExpanded: { [key: string]: boolean } = {};
 
-    Object.entries(allSkillData).forEach(([cat, subCats]) => {
+    Object.entries(alljobroleData).forEach(([cat, subCats]) => {
       initialExpanded[`cat-${cat}`] = true;
       Object.keys(subCats).forEach((sub) => {
         initialExpanded[`sub-${cat}-${sub}`] = true;
@@ -78,10 +75,10 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
     });
 
     setExpanded(initialExpanded);
-  }, [allSkillData]);
+  }, [alljobroleData]);
   const openAll = () => {
     const allKeys: { [key: string]: boolean } = {};
-    Object.entries(allSkillData).forEach(([cat, subCats]) => {
+    Object.entries(alljobroleData).forEach(([cat, subCats]) => {
       allKeys[`cat-${cat}`] = true;
       Object.keys(subCats).forEach((sub) => {
         allKeys[`sub-${cat}-${sub}`] = true;
@@ -106,16 +103,16 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
   };
 
   const filterTree = () => {
-    if (!searchTerm.trim()) return allSkillData;
+    if (!searchTerm.trim()) return alljobroleData;
 
     const filtered: SkillTree = {};
 
-    Object.entries(allSkillData).forEach(([cat, subCats]) => {
-      const filteredSub: { [sub: string]: allSkillData[] } = {};
+    Object.entries(alljobroleData).forEach(([cat, subCats]) => {
+      const filteredSub: { [sub: string]: alljobroleData[] } = {};
 
       Object.entries(subCats).forEach(([sub, skills]) => {
         const matchedSkills = skills.filter((skill) =>
-          skill.title.toLowerCase().includes(searchTerm.toLowerCase())
+          skill.jobrole.toLowerCase().includes(searchTerm.toLowerCase())
         );
         if (matchedSkills.length) {
           filteredSub[sub] = matchedSkills;
@@ -135,7 +132,7 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
   const handleAddClick = async (skillname: string | null) => {
     // alert(skillname);
     try {
-      const res = await fetch(`${sessionUrl}/skill_library`, {
+      const res = await fetch(`${sessionUrl}/jobrole_library`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -286,7 +283,7 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
                 <summary className="cursor-pointer flex items-center p-0 hover:bg-gray-100 rounded">
                   <span className="flex items-center font-semibold border-1 border-[#ddd] rounded-sm px-2">
                     <i className="mdi mdi-folder mr-2 font-bold text-yellow-700"></i>{" "}
-                    All Skills
+                    All Jobroles
                   </span>
                 </summary>
                 <ul className="ml-4 space-y-1">
@@ -307,7 +304,7 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
                             {Object.entries(subCategories).map(
                               ([subCategory, skills]) => (
                                 <li key={subCategory}>
-                                  <summary
+                                  {/* <summary
                                     onClick={() =>
                                       toggleExpand(
                                         `sub-${category}-${subCategory}`
@@ -319,7 +316,20 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
                                       <i className="mdi mdi-folder-multiple-outline mr-2 text-green-400"></i>
                                       {subCategory}
                                     </span>
-                                  </summary>
+                                  </summary> */}
+                                  <summary
+                                  onClick={() => toggleExpand(`sub-${category}-${subCategory}`)}
+                                  className={`cursor-pointer flex items-center hover:bg-gray-50 rounded-sm px-2 ${
+                                    subCategory !== "no_sub_category" ? "border-b-1 border-[#ddd]" : ""
+                                  }`}
+                                >
+                                  {subCategory !== "no_sub_category" && (
+                                    <span className="flex items-center font-bold">
+                                      <i className="mdi mdi-folder-multiple-outline mr-2 text-green-400"></i>
+                                      {subCategory}
+                                    </span>
+                                  )}
+                                </summary>
                                   {expanded[
                                     `sub-${category}-${subCategory}`
                                   ] && (
@@ -332,17 +342,16 @@ const TreeView: React.FC<TreeViewProps> = ({ allSkillData }) => {
                                           onDoubleClick={() =>
                                             dbclickLi(skill.id)
                                           }
-                                          title={skill.title ? skill.title : '555'}
                                         >
                                           <summary className="hover:bg-gray-100 rounded">
                                             <span className="flex items-center cursor-pointer border-b-1 border-[#ddd]">
                                               <i
                                                 className="mdi mdi mdi-plus-circle mr-2 text-blue-400"
                                                 onClick={() =>
-                                                  handleAddClick(skill.title)
+                                                  handleAddClick(skill.jobrole)
                                                 }
                                               ></i>
-                                              {skill.title}
+                                              {skill.jobrole}
                                             </span>
                                           </summary>
                                         </li>

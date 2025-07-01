@@ -101,7 +101,7 @@ type ApplicationEntry = {
   const fetchInitialData = async () => {
     const res = await fetch( `${sessionData.url}/skill_library/create?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&skill_id=${editData?.id}&formType=application`);
     const data = await res.json();
-    setProficiencyLevel(data.proficiency_levels || []);
+    setProficiencyLevel(data.grouped_proficiency_levels || []);
     setSubmittedData(data.userApplicationData||[]);
   };
 
@@ -219,7 +219,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     {
       name: (
         <div>
-          <div>Proficiency Level</div>
+          <div>Skill Proficiency Level</div>
           <input
             type="text"
             placeholder="Search..."
@@ -244,103 +244,23 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           />
         </div>
       ),
-      selector: (row: ApplicationEntry) => row.application ?? "",
+      selector: (row: ApplicationEntry) => 
+         row.application
+          ? (row.application.length > 100
+            ? `${row.application.substring(0, 100)}...`
+            : row.application)
+          : "N/A",
       sortable: true,
       wrap: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Category</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("category", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
+       cell: (row: ApplicationEntry) => (
+        <span title={row.application || "N/A"}>
+          {row.application
+            ? row.application.length > 100
+              ? `${row.application.substring(0, 100)}...`
+              : row.application
+            : "N/A"}
+        </span>
       ),
-      selector: (row: ApplicationEntry) => row.category ?? "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Sub Category</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("sub_category", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: ApplicationEntry) => row.sub_category ?? "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Skill Title</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("skillTitle", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: ApplicationEntry) => row.skillTitle ?? "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Created By</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) =>
-              handleColumnFilter("created_by_user", e.target.value)
-            }
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: ApplicationEntry) => row.created_by_user ?? "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Created At</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("created_at", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: ApplicationEntry) =>
-        row.created_at ? new Date(row.created_at).toLocaleDateString() : "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Updated At</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("updated_at", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: ApplicationEntry) =>
-        row.updated_at ? new Date(row.updated_at).toLocaleDateString() : "N/A",
-      sortable: true,
     },
     {
       name: "Actions",
@@ -361,7 +281,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         </div>
       ),
       ignoreRowClick: true,
-      allowOverflow: true,
+      // allowOverflow: true,
       button: true,
     },
   ];
@@ -393,7 +313,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <div key={index} className="grid md:grid-cols-3 md:gap-6 bg-[#fff] border-b-1 border-[#ddd] shadow-xl p-4 rounded-lg mt-2">
             <div className="relative z-0 w-full group text-left">
               <label htmlFor={`proficiency_level-${index}`} className="text-left">
-                Proficiency Level
+              Skill Proficiency Level
               </label>
               <br />
               <select

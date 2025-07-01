@@ -11,8 +11,7 @@ interface Skill {
   category: string;
   sub_category: string | null;
   no_sub_category: string | null;
-  title: string;
-  description: string;
+  jobrole: string;
 }
 
 type SkillTree = {
@@ -45,7 +44,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
     edit: false,
   });
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key state
-  const [isOpen, setIsOpen] = useState(true);
+
   // Initialize session data
   useEffect(() => {
     const userData = localStorage.getItem('userData');
@@ -68,7 +67,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
       const fetchData = async () => {
         try {
           const res = await fetch(
-            `${sessionData.url}/skill_library?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}`
+            `${sessionData.url}/jobrole_library?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}`
           );
           const data = await res.json();
           setSkillsData(data.userTree || {});
@@ -83,14 +82,14 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
   // Initialize expanded state
   useEffect(() => {
     const initialExpanded: Record<string, boolean> = {};
-
+    
     Object.entries(skillsData).forEach(([cat, subCats]) => {
       initialExpanded[`cat-${cat}`] = true;
       Object.keys(subCats).forEach((sub) => {
         initialExpanded[`sub-${cat}-${sub}`] = true;
       });
     });
-
+    
     setExpanded(initialExpanded);
   }, [skillsData]);
 
@@ -99,7 +98,6 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
   };
 
   const toggleAll = (open: boolean) => {
-    setIsOpen(open);
     const newExpanded: Record<string, boolean> = {};
     Object.entries(skillsData).forEach(([cat, subCats]) => {
       newExpanded[`cat-${cat}`] = open;
@@ -120,7 +118,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
 
       Object.entries(subCats).forEach(([sub, skills]) => {
         const matchedSkills = skills.filter(skill =>
-          skill.title.toLowerCase().includes(searchTerm.toLowerCase())
+          skill.jobrole.toLowerCase().includes(searchTerm.toLowerCase())
         );
         if (matchedSkills.length) filteredSub[sub] = matchedSkills;
       });
@@ -131,21 +129,21 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
     return filtered;
   };
 
-  const handleSkillSelect = (skillId: number | null) => {
+  const handleSkillSelect = (skillId: number|null) => {
     setSelectedSkill(skillId);
   };
 
-  const handleAddSkill = (skillId: number | null) => {
+  const handleAddSkill = (skillId: number|null) => {
     setSelectedSkill(skillId);
   };
 
   const handleDelete = async () => {
     if (!selectedSkill) return;
-
+    
     if (window.confirm("Are you sure you want to delete this job role?")) {
       try {
         const res = await fetch(
-          `${sessionData.url}/skill_library/${selectedSkill}?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&user_id=${sessionData.userId}&formType=user`,
+          `${sessionData.url}/jobrole_library/${selectedSkill}?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&user_id=${sessionData.userId}&formType=user`,
           {
             method: "DELETE",
             headers: {
@@ -167,7 +165,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
   };
 
   const dbclickLi = (id: number | null) => {
-    if (id !== null) setDialogOpen({ ...dialogOpen, view: true });
+    if (id !== null) setDialogOpen({...dialogOpen, view: true});
   };
 
   const displayedSkills = filterTree();
@@ -175,7 +173,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
   return (
     <div className="flex gap-4 mx-2 mb-2">
       {/* Sidebar */}
-      {/* <div className="w-1/5 shadow p-2 bg-white rounded-sm mb-2 h-fit">
+      <div className="w-1/5 shadow p-2 bg-white rounded-sm mb-2 h-fit">
         <div className="p-4 space-y-6">
           <div>
             <h6 className="text-sm font-semibold text-gray-700">Search:</h6>
@@ -256,89 +254,74 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
             </button>
           </div>
         </div>
-      </div> */}
+      </div>
 
       {/* Main Tree */}
-      <div className="w-full shadow p-2 bg-white rounded-sm mb-2 h-fit inset-shadow-sm inset-shadow-[#EBF7FF]">
+      <div className="w-4/5 shadow p-2 bg-white rounded-sm mb-2 h-fit">
         <div className="p-4">
           <ul className="space-y-2">
             <li>
               <summary className="cursor-pointer flex items-center p-0 hover:bg-gray-100 rounded">
                 <span className="flex items-center font-semibold border-1 border-[#ddd] rounded-sm px-2">
-                  <i className="mdi mdi-folder mr-2 font-bold text-yellow-700"></i> All Skills
-                  <div className="openClose pl-4">
-                    <i className={`mdi mdi-plus-box m-2 text-xl ${isOpen ? "text-cyan-600" : ""}`} onClick={() => toggleAll(true)} title="All Skill Open"></i>
-                    <i
-                      className={`mdi mdi-minus-box text-xl ${isOpen ? "" : "text-cyan-600"}`}
-                      onClick={() => toggleAll(false)}
-                      title="All Skill Close"
-                    ></i>
-                  </div>
+                  <i className="mdi mdi-folder mr-2 font-bold text-yellow-700"></i> All Jobroles
                 </span>
               </summary>
               <ul className="ml-4 space-y-1">
-                {Object.entries(displayedSkills).map(([category, subCategories]) => (
-                  <li key={category}>
-                    <summary
-                      onClick={() => toggleExpand(`cat-${category}`)}
-                      className="cursor-pointer flex items-center hover:bg-gray-100 rounded"
+                {Object.entries(displayedSkills).map(([category, subCategories], catIndex) => (
+  <li key={`cat-${catIndex}-${category}`}>
+    <summary
+      onClick={() => toggleExpand(`cat-${category}`)}
+      className="cursor-pointer flex items-center hover:bg-gray-100 rounded"
+    >
+      <span className="flex items-center font-semibold border-b-1 border-[#ddd] rounded-sm px-2">
+        <i className="mdi mdi-folder mr-2 text-yellow-600"></i>
+        {category}
+      </span>
+    </summary>
+    {expanded[`cat-${category}`] && (
+      <ul className="ml-4 mt-1 space-y-1">
+          {Object.entries(subCategories).map(([subCategory, skills], subCatIndex) => (
+            <li key={`subcat-${catIndex}-${subCatIndex}-${subCategory}`}>
+              <summary
+                onClick={() => toggleExpand(`sub-${category}-${subCategory}`)}
+                className={`cursor-pointer flex items-center hover:bg-gray-50 rounded-sm px-2 ${
+                  subCategory !== "no_sub_category" ? "border-b-1 border-[#ddd]" : ""
+                }`}
+              >
+                {subCategory !== "no_sub_category" && (
+                  <span className="flex items-center font-bold">
+                    <i className="mdi mdi-folder-multiple-outline mr-2 text-green-400"></i>
+                    {subCategory}
+                  </span>
+                )}
+              </summary>
+              {expanded[`sub-${category}-${subCategory}`] && (
+                <ul className="ml-6 mt-1 space-y-0.5">
+                  {skills.map((skill, skillIndex) => (
+                    <li 
+                      key={`skill-${catIndex}-${subCatIndex}-${skillIndex}-${skill.id}`}
+                      className="text-sm" 
+                      onDoubleClick={() => dbclickLi(skill.id)}
                     >
-                      {category != '' && (<span className="flex items-center font-semibold border-b-1 border-[#ddd] rounded-sm px-2">
-                        <i className="mdi mdi-folder mr-2 text-yellow-600"></i>
-                        {category}
-                      </span>)}
-                    </summary>
-                    {expanded[`cat-${category}`] && (
-                      <ul className="ml-4 mt-1 space-y-1">
-                        {Object.entries(subCategories).map(([subCategory, skills]) => (
-                          <li key={subCategory}>
-                            <summary
-                              onClick={() => toggleExpand(`sub-${category}-${subCategory}`)}
-                              className={`cursor-pointer flex items-center hover:bg-gray-50 rounded-sm px-2 ${subCategory !== "no_sub_category" ? "border-b-1 border-[#ddd]" : ""
-                                }`}
-                            >
-                              {subCategory !== "no_sub_category" && (
-                                <span className="flex items-center font-bold">
-                                  <i className="mdi mdi-folder-multiple-outline mr-2 text-green-400"></i>
-                                  {subCategory}
-                                </span>
-                              )}
-                            </summary>
-                            {expanded[`sub-${category}-${subCategory}`] && (
-                              <ul className="ml-6 mt-1 space-y-0.5">
-                                {skills.map(skill => (
-                                  <li key={skill.id} className="text-sm" onDoubleClick={() => dbclickLi(skill.id)}>
-                                    <summary className="hover:bg-gray-100 rounded flex justify-between  border-b-1 border-[#ddd]">
-                                      <span
-                                        className="flex items-center cursor-pointer"
-                                        onClick={() => handleAddSkill(skill.id)}
-                                        data-title={skill.description}
-                                      >
-                                        <i className="mdi mdi-star-outline mr-2 text-yellow-400"></i>
-                                        {skill.title}
-
-                                      </span>
-                                      <span
-                                        className="flex items-center cursor-pointer"
-                                        onClick={() => handleAddSkill(skill.id)}
-                                      >
-                                          <span className="mdi mdi-eye mr-2 text-lg text-cyan-700" data-titleHead="View Skill" onClick={() => setDialogOpen({ ...dialogOpen, view: true })}></span>
-                                        <span className="mdi mdi-pencil-box mr-2 text-lg text-blue-400" data-titleHead="Edit Skill"
-                                          onClick={() => setDialogOpen({ ...dialogOpen, edit: true })}></span>
-                                        <span className="mdi mdi-close-box mr-2 text-lg text-red-400" data-titleHead="Delete Skill" onClick={handleDelete}></span>
-                                    
-                                      </span>
-                                    </summary>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
+                      <summary className="hover:bg-gray-100 rounded">
+                        <span
+                          className="flex items-center cursor-pointer border-b-1 border-[#ddd]"
+                          onClick={() => handleAddSkill(skill.id)}
+                        >
+                          <i className="mdi mdi-star-outline mr-2 text-yellow-400"></i>
+                          {skill.jobrole}
+                        </span>
+                      </summary>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  ))}
               </ul>
             </li>
           </ul>
@@ -347,34 +330,34 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
 
       {/* Dialogs */}
       {dialogOpen.view && selectedSkill && (
-        <ViewDialog skillId={selectedSkill} formType="user"
-          onClose={() => {
+       <ViewSkill skillId={selectedSkill} formType="user"
+           onClose={() => {
             setDialogOpen({ ...dialogOpen, view: false });
             setSelectedSkillId(null);
           }}
           onSuccess={() => {
-            setDialogOpen({ ...dialogOpen, add: false });
-          }}
+            setDialogOpen({...dialogOpen, add: false});
+        }}
         />
       )}
-
+      
       {dialogOpen.add && (
         <AddDialog skillId={selectedSkill}
-          onClose={() => setDialogOpen({ ...dialogOpen, add: false })}
+          onClose={() => setDialogOpen({...dialogOpen, add: false})}
           onSuccess={() => {
-            setDialogOpen({ ...dialogOpen, add: false });
+            setDialogOpen({...dialogOpen, add: false});
             setRefreshKey(prev => prev + 1); // Refresh tree after adding
-          }}
+        }}
         />
       )}
-
+      
       {dialogOpen.edit && selectedSkill && (
-        <EditDialog
-          skillId={selectedSkill}
-          onClose={() => setDialogOpen({ ...dialogOpen, edit: false })}
+        <EditDialog 
+          jobRoleId={selectedSkill}
+          onClose={() => setDialogOpen({...dialogOpen, edit: false})}
           onSuccess={() => {
             setRefreshKey(prev => prev + 1); // Refresh tree after editing
-            setDialogOpen({ ...dialogOpen, edit: false });
+            setDialogOpen({...dialogOpen, edit: false});
           }}
         />
       )}

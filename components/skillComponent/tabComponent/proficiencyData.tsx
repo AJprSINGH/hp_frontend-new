@@ -44,6 +44,7 @@ type SubmittedProficiency = {
   created_by?: string;
   created_at?: string;
   updated_at?: string;
+  sub_institute_id?: number | null;
 };
 
 type ApiResponse = {
@@ -127,9 +128,9 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
       const res = await fetch(
         `${sessionData.url}/skill_library/create?type=API&token=${sessionData.token}&sub_institute_id=${sessionData.subInstituteId}&org_type=${sessionData.orgType}&skill_id=${editData?.id}&formType=proficiency_level`
       );
-      
+
       if (!res.ok) throw new Error('Failed to fetch data');
-      
+
       const data: ApiResponse = await res.json();
       const transformedData = data.proficiency_levels.map(transformData);
       setSubmittedData(transformedData);
@@ -228,7 +229,7 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
       });
 
       const data = await res.json();
-      
+
       if (res.ok) {
         // setMessage({ type: 'success', text: data.message || 'Successfully submitted.' });
         setProficiencyLevels([defaultProficiencyLevel]);
@@ -314,7 +315,7 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
     {
       name: (
         <div>
-          <div>Description</div>
+          <div>Proficiency Description</div>
           <input
             type="text"
             placeholder="Search..."
@@ -323,9 +324,23 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
           />
         </div>
       ),
-      selector: (row: SubmittedProficiency) => row.description,
+      selector: (row: SubmittedProficiency) =>
+        row.description
+          ? (row.description.length > 100
+            ? `${row.description.substring(0, 100)}...`
+            : row.description)
+          : "N/A",
       sortable: true,
       wrap: true,
+      cell: (row: SubmittedProficiency) => (
+        <span title={row.description || "N/A"}>
+          {row.description
+            ? row.description.length > 100
+              ? `${row.description.substring(0, 100)}...`
+              : row.description
+            : "N/A"}
+        </span>
+      ),
     },
     {
       name: (
@@ -359,72 +374,27 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
       wrap: true,
     },
     {
-      name: (
-        <div>
-          <div>Created By</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("created_by", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: SubmittedProficiency) => row.created_by || "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Created At</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("created_at", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: SubmittedProficiency) =>
-        row.created_at ? new Date(row.created_at).toLocaleDateString() : "N/A",
-      sortable: true,
-    },
-    {
-      name: (
-        <div>
-          <div>Updated At</div>
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) => handleColumnFilter("updated_at", e.target.value)}
-            style={{ width: "100%", padding: "4px", fontSize: "12px" }}
-          />
-        </div>
-      ),
-      selector: (row: SubmittedProficiency) =>
-        row.updated_at ? new Date(row.updated_at).toLocaleDateString() : "N/A",
-      sortable: true,
-    },
-    {
       name: "Actions",
       cell: (row: SubmittedProficiency) => (
         <div className="flex space-x-2">
-          <button
+
+          {row.created_by != null && (<><button
+
             onClick={() => handleEdit(row)}
             className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded"
           >
             <span className="mdi mdi-pencil"></span>
-          </button>
-          <button
+          </button><button
             onClick={() => row.id && handleDelete(row.id)}
             className="bg-red-500 hover:bg-red-700 text-white text-xs py-1 px-2 rounded"
           >
-            <span className="mdi mdi-trash-can"></span>
-          </button>
+              <span className="mdi mdi-trash-can"></span>
+            </button></>
+          )}
         </div>
       ),
       ignoreRowClick: true,
-      allowOverflow: true,
+      // allowOverflow: true,
       button: true,
     },
   ];
@@ -482,7 +452,7 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
 
             <div className="relative z-0 w-full group text-left">
               <label htmlFor={`description-${index}`} className="block mb-2">
-                Description*
+                Proficiency Description*
               </label>
               <textarea
                 name="description"
@@ -546,34 +516,34 @@ const ProficiencyLevelData: React.FC<{ editData: any }> = ({ editData }) => {
                   onClick={handleAddProficiencyLevel}
                   className="bg-transparent hover:bg-green-500 text-green-700 font-semibold hover:text-white py-2 px-4 border border-green-500 hover:border-transparent rounded-full ml-2"
                 >
-                 +
+                  +
                 </button>
               )}
             </div>
           </div>
         ))}
 
-          <button
-            type="submit"
-            className="text-white mt-2 bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : editingId ? "Update" : "Submit"}
-          </button>
+        <button
+          type="submit"
+          className="text-white mt-2 bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+          disabled={loading}
+        >
+          {loading ? "Submitting..." : editingId ? "Update" : "Submit"}
+        </button>
 
-          {editingId && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingId(null);
-                setProficiencyLevels([defaultProficiencyLevel]);
-                setMessage(null);
-              }}
-              className="text-white bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-            >
-              Cancel
-            </button>
-          )}
+        {editingId && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(null);
+              setProficiencyLevels([defaultProficiencyLevel]);
+              setMessage(null);
+            }}
+            className="text-white bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+          >
+            Cancel
+          </button>
+        )}
       </form>
 
       <div className="mt-8 bg-white p-4 rounded-lg shadow-lg">

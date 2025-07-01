@@ -35,7 +35,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ onMenuItemClick 
         }
         setLoading(false);
         const data = await response.json();
-        console.log(data);
+
         setMenuItemArr(
           data.map((item: any) => ({
             id: item.id,
@@ -102,8 +102,6 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ onMenuItemClick 
         aria-label="Main navigation"
       >
         <div className="flex flex-wrap gap-2 justify-between w-full max-w-[1389px] max-md:max-w-full">
-
-          {/* Manually added Website Analyzer menu item */}
           <MenuItem
             key="website-analyzer"
             iconSrc="https://cdn.builder.io/api/v1/image/assets/TEMP/7ad6cfa32ac11f46cbf34fa6baab2bb1cb352269?placeholderIfAbsent=true&apiKey=f18a54c668db405eb048e2b0a7685d39"
@@ -118,6 +116,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ onMenuItemClick 
             }}
           />
           {menuItemArr.map((item) => (
+
             <MenuItem
               key={item.id}
               iconSrc="https://cdn.builder.io/api/v1/image/assets/TEMP/7ad6cfa32ac11f46cbf34fa6baab2bb1cb352269?placeholderIfAbsent=true&apiKey=f18a54c668db405eb048e2b0a7685d39"
@@ -132,6 +131,3 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({ onMenuItemClick 
 };
 
 export default NavigationMenu;
-
-
-// ... existing code ...
