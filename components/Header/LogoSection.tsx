@@ -1,11 +1,11 @@
 import * as React from "react";
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation';
 
 export const LogoSection: React.FC = () => {
   const router = useRouter();
   const [userData, setUserData] = useState<any | null>(null);
-  
+
   useEffect(() => {
     const userData = localStorage.getItem('userData');
     if (userData !== null) {
@@ -19,7 +19,7 @@ export const LogoSection: React.FC = () => {
 
   return (
     <div className="flex">
-      <div className="iconDivs flex gap-4 items-center">
+      <div className="iconDivs flex gap-4 px-2 items-center">
         <div className="searchIcon">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -77,9 +77,9 @@ export const LogoSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-2 border-l-2 border-black-500 px-2">
+      <div className="flex gap-2 border-l-2 border-gray-800 px-2">
         {/* <p>{userData?.user_name}</p> */}
-        {userData?.org_logo ? <img src={`https://erp.triz.co.in/admin_dep/images/${userData.org_logo}`} alt="Organization Logo" width="80px" height="680px"/> : <p>{userData?.user_name}</p>}
+        {userData?.org_logo ? <img src={`https://erp.triz.co.in/admin_dep/images/${userData.org_logo}`} alt="Organization Logo" width="80px" height="680px" /> : <p>{userData?.user_name}</p>}
       </div>
     </div>
   );

@@ -212,7 +212,7 @@ const TableView: React.FC<TableViewProps> = ({ refreshKey }) => {
                         type="text"
                         placeholder="Search..."
                         onChange={(e) => handleColumnFilter("jobrole", e.target.value)}
-                        style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                        style={{ width: "100%", padding: "4px", fontSize: "12px", backgroundColor: "transparent" }}
                     />
                 </div>
             ),
@@ -228,7 +228,7 @@ const TableView: React.FC<TableViewProps> = ({ refreshKey }) => {
                         type="text"
                         placeholder="Search..."
                         onChange={(e) => handleColumnFilter("description", e.target.value)}
-                        style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                        style={{ width: "100%", padding: "4px", fontSize: "12px", backgroundColor: "transparent" }}
                     />
                 </div>
             ),
@@ -258,7 +258,7 @@ const TableView: React.FC<TableViewProps> = ({ refreshKey }) => {
                         type="text"
                         placeholder="Search..."
                         onChange={(e) => handleColumnFilter("performance_expectation", e.target.value)}
-                        style={{ width: "100%", padding: "4px", fontSize: "12px" }}
+                        style={{ width: "100%", padding: "4px", fontSize: "12px", backgroundColor: "transparent" }}
                     />
                 </div>
             ),

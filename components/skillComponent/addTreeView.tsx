@@ -264,10 +264,14 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
           <ul className="space-y-2">
             <li>
               <summary className="cursor-pointer flex items-center p-0 hover:bg-gray-100 rounded">
-                <span className="flex items-center font-semibold border-1 border-[#ddd] rounded-sm px-2">
+                <span className="flex items-center font-semibold border border-gray-300 rounded-sm px-2">
                   <i className="mdi mdi-folder mr-2 font-bold text-yellow-700"></i> All Skills
                   <div className="openClose pl-4">
-                    <i className={`mdi mdi-plus-box m-2 text-xl ${isOpen ? "text-cyan-600" : ""}`} onClick={() => toggleAll(true)} title="All Skill Open"></i>
+                    <i
+                      className={`mdi mdi-plus-box m-2 text-xl ${isOpen ? "text-cyan-600" : ""}`}
+                      onClick={() => toggleAll(true)}
+                      title="All Skill Open"
+                    ></i>
                     <i
                       className={`mdi mdi-minus-box text-xl ${isOpen ? "" : "text-cyan-600"}`}
                       onClick={() => toggleAll(false)}
@@ -275,6 +279,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
                     ></i>
                   </div>
                 </span>
+
               </summary>
               <ul className="ml-4 space-y-1">
                 {Object.entries(displayedSkills).map(([category, subCategories]) => (
@@ -283,7 +288,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
                       onClick={() => toggleExpand(`cat-${category}`)}
                       className="cursor-pointer flex items-center hover:bg-gray-100 rounded"
                     >
-                      {category != '' && (<span className="flex items-center font-semibold border-b-1 border-[#ddd] rounded-sm px-2">
+                      {category != '' && (<span className="flex items-center font-semibold border-b border-gray-300 rounded-sm px-2">
                         <i className="mdi mdi-folder mr-2 text-yellow-600"></i>
                         {category}
                       </span>)}
@@ -294,7 +299,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
                           <li key={subCategory}>
                             <summary
                               onClick={() => toggleExpand(`sub-${category}-${subCategory}`)}
-                              className={`cursor-pointer flex items-center hover:bg-gray-50 rounded-sm px-2 ${subCategory !== "no_sub_category" ? "border-b-1 border-[#ddd]" : ""
+                              className={`cursor-pointer flex items-center hover:bg-gray-50 rounded-sm px-2 ${subCategory !== "no_sub_category" ? "border-b border-gray-300" : ""
                                 }`}
                             >
                               {subCategory !== "no_sub_category" && (
@@ -308,7 +313,7 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
                               <ul className="ml-6 mt-1 space-y-0.5">
                                 {skills.map(skill => (
                                   <li key={skill.id} className="text-sm" onDoubleClick={() => dbclickLi(skill.id)}>
-                                    <summary className="hover:bg-gray-100 rounded flex justify-between  border-b-1 border-[#ddd]">
+                                    <summary className="hover:bg-gray-100 rounded flex justify-between  border-b border-gray-300">
                                       <span
                                         className="flex items-center cursor-pointer"
                                         onClick={() => handleAddSkill(skill.id)}
@@ -322,11 +327,11 @@ const AddSkillView: React.FC<AddSkillViewProps> = ({ userSkillsData }) => {
                                         className="flex items-center cursor-pointer"
                                         onClick={() => handleAddSkill(skill.id)}
                                       >
-                                          <span className="mdi mdi-eye mr-2 text-lg text-cyan-700" data-titleHead="View Skill" onClick={() => setDialogOpen({ ...dialogOpen, view: true })}></span>
+                                        <span className="mdi mdi-eye mr-2 text-lg text-cyan-700" data-titleHead="View Skill" onClick={() => setDialogOpen({ ...dialogOpen, view: true })}></span>
                                         <span className="mdi mdi-pencil-box mr-2 text-lg text-blue-400" data-titleHead="Edit Skill"
                                           onClick={() => setDialogOpen({ ...dialogOpen, edit: true })}></span>
                                         <span className="mdi mdi-close-box mr-2 text-lg text-red-400" data-titleHead="Delete Skill" onClick={handleDelete}></span>
-                                    
+
                                       </span>
                                     </summary>
                                   </li>
