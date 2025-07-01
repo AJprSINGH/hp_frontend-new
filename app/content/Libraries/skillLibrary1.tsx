@@ -17,12 +17,21 @@ interface SkillItem {
   sub_category: string;
   no_sub_category: string;
   title: string;
-  description?:string;
+  description: string; // Changed from optional to required
+}
+
+interface Skill {
+  id: number;
+  category: string;
+  sub_category: string;
+  no_sub_category: string;
+  title: string;
+  description: string;
 }
 
 type SkillTree = {
   [category: string]: {
-    [subCategory: string]: SkillItem[];
+    [subCategory: string]: SkillItem[] | Skill[];
   };
 };
 const SkillLibrary = () => {
@@ -41,12 +50,12 @@ const SkillLibrary = () => {
   const [userSkillsData, setuserSkillsData] = useState<userSkillsData[]>([]);
   const [activeTab, setActiveTab] = useState<'My Skills' | 'All Skills' | 'Skill Library'>('My Skills'); // start with Table for demo
   const [selectedSubDepartments, setSelectedSubDepartments] = useState<string[]>([]);
-   const [dialogOpen, setDialogOpen] = useState({
-      view: false,
-      add: false,
-      edit: false,
-    });
-  
+  const [dialogOpen, setDialogOpen] = useState({
+    view: false,
+    add: false,
+    edit: false,
+  });
+
   // const transformToTree = (data: allSkillData[] | userSkillsData[]): SkillTree => {
   //   const tree: SkillTree = {};
 
@@ -75,7 +84,11 @@ const SkillLibrary = () => {
       const subCategory = item.sub_category || 'no_sub_category';
       if (!tree[category]) tree[category] = {};
       if (!tree[category][subCategory]) tree[category][subCategory] = [];
-      tree[category][subCategory].push(item);
+      // Ensure description exists for SkillItem
+      tree[category][subCategory].push({
+        ...item,
+        description: (item as any).description ?? "",
+      });
     });
     return tree;
   };
@@ -263,14 +276,14 @@ const SkillLibrary = () => {
             )}
           </div>
         </div>
-        
+
       )}
-      {dialogOpen.add  && (
+      {dialogOpen.add && (
         <AddDialog skillId={0}
-          onClose={() => setDialogOpen({...dialogOpen, add: false})}
+          onClose={() => setDialogOpen({ ...dialogOpen, add: false })}
           onSuccess={() => {
-            setDialogOpen({...dialogOpen, add: false});
-        }}
+            setDialogOpen({ ...dialogOpen, add: false });
+          }}
         />
       )}
     </>
